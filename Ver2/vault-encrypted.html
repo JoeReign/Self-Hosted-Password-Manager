@@ -666,15 +666,23 @@ $('#add-vault').onclick = () => {
 /* ---- Export (re-encrypts with the in-memory master password) ---- */
 $('#export-btn').onclick = async () => {
   if(!masterPassword){ toast('Not unlocked'); return; }
-  const encrypted = await encryptVault(data, masterPassword);
-  const blob = new Blob([JSON.stringify(encrypted)], {type:'application/json'});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'vault-data.enc.json';
-  a.click();
-  URL.revokeObjectURL(url);
-  toast('Exported encrypted — save this to your Drive folder');
+  try{
+    const encrypted = await encryptVault(data, masterPassword);
+    const blob = new Blob([JSON.stringify(encrypted)], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'vault-data.enc.json';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Exported encrypted — save this to your Drive folder');
+  }catch(err){
+    console.error(err);
+    toast('Export failed — see console for details');
+  }
 };
 
 function toast(msg){
