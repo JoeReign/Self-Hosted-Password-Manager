@@ -1,0 +1,1287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Vault</title>
+<style>
+  :root{
+    --bg:#12151a;
+    --panel:#181c23;
+    --line:#262b34;
+    --text:#e4e7ec;
+    --muted:#7d8590;
+    --accent:#5cc8a8;
+    --accent-dim:#2c4640;
+    --danger:#d9695f;
+    --sans: -apple-system, BlinkMacSystemFont, 'Inter', sans-serif;
+    --mono: 'JetBrains Mono', 'Courier New', monospace;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;height:100%;}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);height:100vh;overflow:hidden;}
+  ::selection{background:var(--accent-dim);}
+
+  /* Light theme */
+  body.light{
+    --bg:#f0f2f5;
+    --panel:#ffffff;
+    --line:#d0d7de;
+    --text:#1f2328;
+    --muted:#656d76;
+    --accent:#2c8a6f;
+    --accent-dim:#d4eddf;
+    --danger:#cf222e;
+  }
+  body.light input, body.light textarea, body.light select, body.light #diag-log { background:#f6f8fa !important; border-color:#d0d7de !important; color:#1f2328 !important; }
+  body.light .lock-tabs { background:#eaeef2 !important; }
+  body.light #warn { background:#fff5f5 !important; border-color:#ffd5d5 !important; color:#8a3a3a !important; }
+  body.light .vault-item:hover { background:#f3f4f6 !important; }
+  body.light tbody tr:hover { background:#f6f8fa !important; }
+  body.light .io-btn, body.light .img-indicator { background:#f6f8fa !important; }
+
+  /* ===== Lock screen ===== */
+  #lock-screen{
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:var(--bg);z-index:100;
+  }
+  #lock-box{
+    width:420px;max-width:90vw;
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:32px;
+  }
+  #lock-box .mark{
+    font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);
+    text-transform:uppercase;margin-bottom:6px;
+  }
+  #lock-box h1{margin:0 0 4px;font-size:20px;}
+  #lock-box p.sub{color:var(--muted);font-size:13px;margin:0 0 22px;line-height:1.5;}
+  .lock-tabs{display:flex;gap:6px;margin-bottom:20px;background:#0e1116;border-radius:8px;padding:4px;}
+  .lock-tab{
+    flex:1;text-align:center;padding:8px;border-radius:6px;font-size:12.5px;cursor:pointer;
+    color:var(--muted);
+  }
+  .lock-tab.active{background:var(--accent-dim);color:var(--accent);}
+  .lock-panel{display:none;}
+  .lock-panel.active{display:block;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
+  .field input{
+    width:100%;background:#0e1116;border:1px solid var(--line);color:var(--text);
+    padding:10px 11px;border-radius:7px;font-size:13.5px;font-family:var(--sans);
+  }
+  .field input:focus{outline:none;border-color:var(--accent);}
+  #import-status, #legacy-status{font-size:12px;color:var(--muted);margin-bottom:12px;font-family:var(--mono);}
+  .btn{padding:10px 16px;border-radius:7px;font-size:13.5px;cursor:pointer;border:none;font-family:var(--sans);width:100%;}
+  .btn-primary{background:var(--accent);color:#0d1310;font-weight:600;}
+  .btn-primary:hover{filter:brightness(1.08);}
+  .btn-ghost{background:transparent;color:var(--muted);border:1px solid var(--line);margin-top:8px;}
+  .btn-ghost:hover{color:var(--text);}
+  #lock-error{color:var(--danger);font-size:12.5px;margin-top:10px;display:none;}
+  #warn{
+    margin-top:18px;padding:10px 12px;background:#20181a;border:1px solid #3a2622;
+    border-radius:8px;font-size:11.5px;color:#c99b96;line-height:1.5;
+  }
+  .strength-wrap{margin-top:6px;}
+  .strength-bar{height:4px;border-radius:2px;background:var(--line);overflow:hidden;}
+  .strength-fill{height:100%;width:0%;transition:width .25s ease,background .25s ease;}
+  .strength-label{font-size:11px;margin-top:3px;}
+
+  /* ===== App shell ===== */
+  #app{display:none;height:100%;}
+  #app.show{display:flex;}
+
+  #sidebar{width:230px;background:var(--panel);border-right:1px solid var(--line);display:flex;flex-direction:column;flex-shrink:0;}
+  #brand{padding:20px 18px 14px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:start;}
+  #brand .mark{font-family:var(--mono);font-size:11px;letter-spacing:.14em;color:var(--accent);text-transform:uppercase;}
+  #brand h1{font-size:17px;margin:6px 0 0;font-weight:600;}
+  #lock-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:15px;padding:2px;}
+  #lock-btn:hover{color:var(--text);}
+
+  #vault-list{flex:1;overflow-y:auto;padding:10px 8px;}
+  .vault-item{
+    display:flex;align-items:center;justify-content:space-between;gap:8px;
+    padding:10px 10px;border-radius:8px;cursor:pointer;color:var(--muted);
+    font-size:13.5px;margin-bottom:2px;font-family:var(--mono);word-break:break-all;
+  }
+  .vault-item:hover{background:#1e232b;color:var(--text);}
+  .vault-item.active{background:var(--accent-dim);color:var(--accent);}
+  .vault-item .count{font-size:11px;color:var(--muted);background:#20252d;padding:1px 6px;border-radius:20px;flex-shrink:0;}
+  .vault-item.active .count{color:var(--accent);}
+  .vault-del{opacity:0;background:none;border:none;color:var(--danger);cursor:pointer;font-size:14px;padding:0 4px;flex-shrink:0;}
+  .vault-item:hover .vault-del{opacity:.7;}
+  .vault-del:hover{opacity:1 !important;}
+
+  #add-vault{
+    margin:8px 12px 6px;padding:9px;background:transparent;border:1px dashed var(--line);
+    border-radius:8px;color:var(--muted);font-size:12.5px;cursor:pointer;font-family:var(--sans);
+  }
+  #add-vault:hover{border-color:var(--accent);color:var(--accent);}
+
+  #lock-timer{font-size:11px;color:var(--muted);padding:0 14px 8px;font-family:var(--mono);}
+
+  #tools{padding:0 14px 8px;display:flex;gap:6px;}
+  #io{padding:0 14px 14px;border-top:1px solid var(--line);display:flex;flex-direction:column;gap:6px;padding-top:10px;}
+  .io-btn{
+    background:#1e232b;border:1px solid var(--line);color:var(--muted);padding:8px 10px;
+    border-radius:7px;font-size:12px;cursor:pointer;text-align:left;font-family:var(--sans);flex:1;
+  }
+  .io-btn:hover{color:var(--text);border-color:#3a4048;}
+
+  #main{flex:1;display:flex;flex-direction:column;min-width:0;}
+  #topbar{padding:20px 28px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;}
+  #vault-title{font-family:var(--mono);font-size:19px;font-weight:600;}
+  #vault-sub{color:var(--muted);font-size:12.5px;margin-top:3px;}
+  #new-entry{background:var(--accent);color:#0d1310;border:none;padding:9px 16px;border-radius:7px;font-weight:600;font-size:13px;cursor:pointer;}
+  #new-entry:hover{filter:brightness(1.08);}
+
+  #search-wrap{position:relative;flex:1;max-width:380px;margin:0 20px;}
+  #search-input{width:100%;background:#0e1116;border:1px solid var(--line);color:var(--text);padding:8px 28px 8px 12px;border-radius:7px;font-size:13px;}
+  #search-input:focus{outline:none;border-color:var(--accent);}
+  #search-clear{position:absolute;right:6px;top:50%;transform:translateY(-50%);background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;display:none;padding:2px 6px;}
+  #search-clear:hover{color:var(--text);}
+
+  #content{flex:1;overflow-y:auto;padding:20px 28px 40px;}
+  #dup-banner{background:rgba(217,105,95,.08);border:1px solid rgba(217,105,95,.25);color:var(--danger);padding:10px 14px;border-radius:8px;font-size:12.5px;margin-bottom:16px;display:none;animation:slideIn .2s ease;}
+  @keyframes slideIn{from{opacity:0;transform:translateY(-8px);}to{opacity:1;transform:translateY(0);}}
+  #empty{color:var(--muted);font-size:14px;text-align:center;margin-top:80px;line-height:1.7;}
+  #empty .big{font-size:15px;color:var(--text);}
+
+  table{width:100%;border-collapse:collapse;}
+  thead th{text-align:left;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:0 12px 10px;border-bottom:1px solid var(--line);}
+  tbody tr{border-bottom:1px solid var(--line);}
+  tbody tr:hover{background:#171b21;}
+  tbody td{padding:12px;font-size:13.5px;vertical-align:top;}
+  td.app{font-weight:600;}
+  td.user, td.pass{font-family:var(--mono);font-size:13px;color:var(--muted);}
+  td.notes{color:var(--muted);font-size:12.5px;max-width:220px;}
+  .pass-cell{display:flex;align-items:center;gap:8px;}
+  .pass-text{letter-spacing:1px;}
+  .eye,.copy-btn,.copy-user-btn{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:2px 4px;}
+  .eye:hover,.copy-btn:hover,.copy-user-btn:hover{color:var(--accent);}
+  .row-actions{white-space:nowrap;}
+  .row-actions button{background:none;border:none;cursor:pointer;font-size:13px;color:var(--muted);padding:4px 6px;}
+  .row-actions button:hover{color:var(--text);}
+  .row-actions .del:hover{color:var(--danger);}
+
+  .drag-handle{cursor:grab;color:var(--muted);font-size:14px;padding:0 4px;user-select:none;display:inline-block;line-height:1;}
+  .drag-handle:active{cursor:grabbing;}
+  tbody tr.dragging{opacity:.4;background:var(--accent-dim) !important;}
+  tbody tr.drag-over-top{border-top:2px solid var(--accent) !important;}
+  tbody tr.drag-over-bottom{border-bottom:2px solid var(--accent) !important;}
+  table.searching .drag-cell, table.searching .drag-header{display:none;}
+
+  /* ===== Overlays ===== */
+  #overlay, #settings-overlay, #diag-overlay{position:fixed;inset:0;background:rgba(8,10,13,.6);display:none;align-items:center;justify-content:center;z-index:50;}
+  #overlay.show, #settings-overlay.show, #diag-overlay.show{display:flex;}
+  #modal, #settings-box{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:420px;max-width:90vw;padding:22px;}
+  #modal h2, #settings-box h2{margin:0 0 16px;font-size:15px;}
+  #modal textarea{width:100%;background:#0e1116;border:1px solid var(--line);color:var(--text);padding:9px 10px;border-radius:7px;font-size:13.5px;font-family:var(--sans);resize:vertical;min-height:50px;}
+  #modal textarea:focus{outline:none;border-color:var(--accent);}
+  #modal-actions, .settings-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:16px;}
+
+  .gen-wrap{display:flex;gap:6px;align-items:center;}
+  .gen-wrap input{flex:1;}
+  .gen-btn{background:var(--accent-dim);border:1px solid var(--accent);color:var(--accent);padding:8px 10px;border-radius:6px;font-size:12px;cursor:pointer;white-space:nowrap;font-family:var(--sans);}
+  .gen-btn:hover{filter:brightness(1.15);}
+
+  .settings-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;}
+  .settings-row label{font-size:13px;}
+  .settings-row select{background:#0e1116;border:1px solid var(--line);color:var(--text);padding:6px 10px;border-radius:6px;font-size:13px;font-family:var(--sans);}
+  .settings-row select:focus{outline:none;border-color:var(--accent);}
+
+  #diag-box{background:var(--panel);border:1px solid var(--line);border-radius:12px;width:720px;max-width:94vw;height:82vh;display:flex;flex-direction:column;padding:20px;}
+  #diag-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+  #diag-header h2{margin:0;font-size:15px;}
+  #diag-log{flex:1;overflow-y:auto;font-family:var(--mono);font-size:12px;line-height:1.6;background:#0e1116;border-radius:8px;padding:12px;}
+  .diag-row{margin-bottom:6px;padding-bottom:6px;border-bottom:1px solid var(--line);}
+  .diag-row:last-child{border-bottom:none;}
+  .diag-time{color:var(--muted);font-size:11px;}
+  .diag-err{color:var(--danger);}
+  .diag-warn{color:#d4a017;}
+  .diag-info{color:var(--accent);}
+
+  #lightbox{position:fixed;inset:0;background:rgba(6,7,9,.88);display:none;align-items:center;justify-content:center;z-index:120;flex-direction:column;gap:14px;}
+  #lightbox.show{display:flex;}
+  #lightbox img{max-width:88vw;max-height:78vh;border-radius:8px;border:1px solid var(--line);}
+  #lightbox-strip{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;max-width:88vw;}
+  #lightbox-strip img{width:52px;height:52px;object-fit:cover;border-radius:6px;cursor:pointer;opacity:.55;border:1px solid var(--line);}
+  #lightbox-strip img.active{opacity:1;border-color:var(--accent);}
+  #lightbox-close{position:absolute;top:20px;right:26px;background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;}
+  #lightbox-close:hover{color:var(--text);}
+
+  #toast{
+    position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+    background:#1e232b;border:1px solid var(--line);padding:10px 16px;border-radius:8px;
+    font-size:12.5px;opacity:0;pointer-events:none;transition:opacity .2s;font-family:var(--mono);z-index:200;
+  }
+  #toast.show{opacity:1;}
+  #file-input, #legacy-file-input, #image-input{display:none;}
+
+  .img-indicator{
+    background:none;border:1px solid var(--line);color:var(--muted);cursor:pointer;
+    font-size:11.5px;padding:3px 8px;border-radius:6px;margin-top:6px;display:inline-flex;align-items:center;gap:5px;
+  }
+  .img-indicator:hover{color:var(--accent);border-color:var(--accent);}
+
+  #image-field label{display:block;font-size:11.5px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.05em;}
+  #img-dropzone{
+    border:1px dashed var(--line);border-radius:8px;padding:14px;text-align:center;
+    color:var(--muted);font-size:12.5px;cursor:pointer;
+  }
+  #img-dropzone:hover{border-color:var(--accent);color:var(--accent);}
+  #img-thumbs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}
+  .thumb-wrap{position:relative;width:64px;height:64px;border-radius:7px;overflow:hidden;border:1px solid var(--line);}
+  .thumb-wrap img{width:100%;height:100%;object-fit:cover;cursor:pointer;}
+  .thumb-remove{
+    position:absolute;top:2px;right:2px;background:rgba(10,12,16,.75);color:#e4a19a;
+    border:none;border-radius:4px;font-size:11px;line-height:1;padding:3px 5px;cursor:pointer;
+  }
+  .thumb-remove:hover{color:var(--danger);}
+</style>
+</head>
+<body>
+
+<!-- LOCK SCREEN -->
+<div id="lock-screen">
+  <div id="lock-box">
+    <div class="mark">/// local vault</div>
+    <h1>Login Store</h1>
+    <p class="sub">AES-256 encrypted, entirely in your browser. Nothing leaves this device unless you export it.</p>
+
+    <div class="lock-tabs">
+      <div class="lock-tab active" data-tab="new">New vault</div>
+      <div class="lock-tab" data-tab="open">Open existing</div>
+    </div>
+
+    <div class="lock-panel active" id="panel-new">
+      <div class="field">
+        <label>Import old unencrypted data (optional)</label>
+        <button class="btn btn-ghost" id="choose-legacy-btn" style="margin-top:0;">Choose old vault-data.json…</button>
+        <input type="file" id="legacy-file-input" accept="application/json">
+        <div id="legacy-status">No file selected — leave blank to start fresh</div>
+      </div>
+      <div class="field">
+        <label>Master password</label>
+        <input type="password" id="new-pass" placeholder="Choose a strong master password">
+        <div id="new-pass-strength" class="strength-wrap" style="display:none;">
+          <div class="strength-bar"><div class="strength-fill" id="new-pass-strength-fill"></div></div>
+          <div class="strength-label" id="new-pass-strength-label"></div>
+        </div>
+      </div>
+      <div class="field"><label>Confirm master password</label><input type="password" id="new-pass-confirm" placeholder="Type it again"></div>
+      <button class="btn btn-primary" id="create-btn">Create vault</button>
+      <div id="warn">There is no password reset. If you forget this, your data cannot be recovered — that's what makes the encryption real.</div>
+    </div>
+
+    <div class="lock-panel" id="panel-open">
+      <div class="field">
+        <label>Encrypted file</label>
+        <button class="btn btn-ghost" id="choose-file-btn" style="margin-top:0;">Choose vault-data.enc.json…</button>
+        <input type="file" id="file-input" accept="application/json">
+        <div id="import-status">No file selected</div>
+      </div>
+      <div class="field"><label>Master password</label><input type="password" id="open-pass" placeholder="Enter your master password"></div>
+      <button class="btn btn-primary" id="unlock-btn">Unlock</button>
+    </div>
+
+    <div id="lock-error"></div>
+    <div style="text-align:center;margin-top:14px;">
+      <button id="lock-diag-btn" style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;text-decoration:underline;">Diagnostics</button>
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div id="sidebar">
+    <div id="brand">
+      <div>
+        <div class="mark">/// local vault</div>
+        <h1>Login Store</h1>
+      </div>
+      <button id="lock-btn" title="Lock vault">🔒</button>
+    </div>
+    <div id="vault-list"></div>
+    <button id="add-vault">+ Add account (tab)</button>
+    <div id="lock-timer"></div>
+    <div id="tools">
+      <button class="io-btn" id="theme-btn" title="Toggle theme">🌙 Theme</button>
+      <button class="io-btn" id="settings-btn" title="Settings">⚙️ Settings</button>
+    </div>
+    <div id="io">
+      <button class="io-btn" id="diag-btn" title="View diagnostics">🐞 Diagnostics</button>
+      <button class="io-btn" id="export-btn">Export encrypted (.json)</button>
+    </div>
+  </div>
+
+  <div id="main">
+    <div id="topbar">
+      <div>
+        <div id="vault-title">—</div>
+        <div id="vault-sub">no entries yet</div>
+      </div>
+      <div id="search-wrap">
+        <input type="text" id="search-input" placeholder="Search entries…" autocomplete="off">
+        <button id="search-clear">✕</button>
+      </div>
+      <button id="new-entry">+ Add entry</button>
+    </div>
+    <div id="content"></div>
+  </div>
+</div>
+
+<!-- ENTRY MODAL -->
+<div id="overlay">
+  <div id="modal">
+    <h2 id="modal-title">New entry</h2>
+    <div class="field"><label>App / Website</label><input id="f-app" placeholder="Netflix"></div>
+    <div class="field"><label>Username / Login</label><input id="f-user" placeholder="coolguy1"></div>
+    <div class="field">
+      <label>Password</label>
+      <div class="gen-wrap">
+        <input id="f-pass" placeholder="••••••••">
+        <button class="gen-btn" id="gen-pass-btn" type="button">Generate</button>
+      </div>
+      <div id="f-pass-strength" class="strength-wrap" style="display:none;">
+        <div class="strength-bar"><div class="strength-fill" id="f-pass-strength-fill"></div></div>
+        <div class="strength-label" id="f-pass-strength-label"></div>
+      </div>
+    </div>
+    <div class="field"><label>Notes</label><textarea id="f-notes" placeholder="Recovery email, 2FA backup codes, etc."></textarea></div>
+    <div class="field" id="image-field">
+      <label>Images (recovery codes, QR codes, etc.)</label>
+      <div id="img-dropzone">Click to add image(s)</div>
+      <input type="file" id="image-input" accept="image/*" multiple>
+      <div id="img-thumbs"></div>
+    </div>
+    <div id="modal-actions">
+      <button class="btn btn-ghost" id="modal-cancel" style="width:auto;margin-top:0;">Cancel</button>
+      <button class="btn btn-primary" id="modal-save" style="width:auto;">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- SETTINGS OVERLAY -->
+<div id="settings-overlay">
+  <div id="settings-box">
+    <h2>Settings</h2>
+    <div class="settings-row">
+      <label>Auto-lock after inactivity</label>
+      <select id="setting-autolock">
+        <option value="1">1 minute</option>
+        <option value="5">5 minutes</option>
+        <option value="10">10 minutes</option>
+        <option value="15">15 minutes</option>
+        <option value="30">30 minutes</option>
+        <option value="60">1 hour</option>
+        <option value="0">Never</option>
+      </select>
+    </div>
+    <div class="settings-row">
+      <label>Theme</label>
+      <select id="setting-theme">
+        <option value="dark">Dark</option>
+        <option value="light">Light</option>
+      </select>
+    </div>
+    <div class="settings-row" style="margin-top:8px;padding-top:12px;border-top:1px solid var(--line);">
+      <span style="font-size:12px;color:var(--muted);">Vault size: <span id="vault-size" style="color:var(--text);font-family:var(--mono);">—</span></span>
+    </div>
+    <div class="settings-actions">
+      <button class="btn btn-ghost" id="settings-cancel" style="width:auto;margin-top:0;">Close</button>
+      <button class="btn btn-primary" id="settings-save" style="width:auto;">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- DIAGNOSTICS OVERLAY -->
+<div id="diag-overlay">
+  <div id="diag-box">
+    <div id="diag-header">
+      <h2>Diagnostics Log</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-ghost" id="diag-clear" style="width:auto;margin-top:0;">Clear</button>
+        <button class="btn btn-ghost" id="diag-close" style="width:auto;margin-top:0;">Close</button>
+      </div>
+    </div>
+    <div id="diag-log"></div>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <button id="lightbox-close">✕</button>
+  <img id="lightbox-main" src="" alt="">
+  <div id="lightbox-strip"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+/* ================================================================
+   Vault Enhanced v2.0
+   Fixes: Base64 stack overflow on large vaults
+   Added: drag-drop reorder, search, password generator, strength
+          meter, auto-lock, diagnostics, duplicate warning,
+          copy username, theme toggle, settings panel.
+   ================================================================ */
+
+/* ================= Diagnostics ================= */
+const Diagnostics = {
+  logs: [],
+  maxLogs: 200,
+  log(type, source, message, detail) {
+    const entry = {
+      time: new Date().toLocaleTimeString(),
+      type,
+      source,
+      message: String(message).slice(0, 500),
+      detail: String(detail || '').slice(0, 1000)
+    };
+    this.logs.unshift(entry);
+    if (this.logs.length > this.maxLogs) this.logs.pop();
+    this.updateBadge();
+    const fn = type === 'ERROR' ? console.error : type === 'WARN' ? console.warn : console.log;
+    fn(`[DIAGNOSTICS ${type}] ${source}: ${message}`, detail || '');
+  },
+  error(source, err) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const detail = err instanceof Error ? err.stack : '';
+    this.log('ERROR', source, msg, detail);
+    toast('Error in ' + source + ': ' + msg, 4000, true);
+  },
+  warn(source, msg, detail) { this.log('WARN', source, msg, detail); },
+  info(source, msg, detail) { this.log('INFO', source, msg, detail); },
+  updateBadge() {
+    const btn = document.getElementById('diag-btn');
+    if (!btn) return;
+    const hasErrors = this.logs.some(l => l.type === 'ERROR');
+    btn.style.color = hasErrors ? 'var(--danger)' : '';
+    btn.style.borderColor = hasErrors ? 'var(--danger)' : '';
+  },
+  getLogs() { return this.logs; },
+  clear() { this.logs = []; this.updateBadge(); }
+};
+
+window.onerror = (msg, url, line, col, err) => {
+  Diagnostics.error('window@' + line + ':' + col, err || new Error(String(msg)));
+  return false;
+};
+window.addEventListener('unhandledrejection', (e) => {
+  Diagnostics.error('unhandledrejection', e.reason instanceof Error ? e.reason : new Error(String(e.reason)));
+});
+
+/* ================= Crypto helpers ================= */
+const enc = new TextEncoder();
+const dec = new TextDecoder();
+
+function b64(buf) {
+  try {
+    const bytes = new Uint8Array(buf);
+    const chunkSize = 0x4000; // 16KB chunks to avoid stack overflow
+    let binary = '';
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+    }
+    return btoa(binary);
+  } catch (err) {
+    Diagnostics.error('b64', err);
+    throw new Error('Base64 encoding failed (data may be too large): ' + err.message);
+  }
+}
+
+function unb64(str) {
+  try {
+    const binary = atob(str);
+    const len = binary.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binary.charCodeAt(i);
+    }
+    return bytes;
+  } catch (err) {
+    Diagnostics.error('unb64', err);
+    throw new Error('Base64 decoding failed: ' + err.message);
+  }
+}
+
+async function deriveKey(password, salt) {
+  const keyMaterial = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey(
+    { name:'PBKDF2', salt, iterations: 250000, hash:'SHA-256' },
+    keyMaterial,
+    { name:'AES-GCM', length:256 },
+    false,
+    ['encrypt','decrypt']
+  );
+}
+
+async function encryptVault(obj, password) {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const key = await deriveKey(password, salt);
+  const plaintext = enc.encode(JSON.stringify(obj));
+  const sizeMB = plaintext.length / (1024 * 1024);
+  if (sizeMB > 5) Diagnostics.warn('encryptVault', 'Large vault: ' + sizeMB.toFixed(1) + ' MB plaintext');
+  const ciphertext = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, plaintext);
+  return {
+    format: 'local-vault-v1',
+    salt: b64(salt),
+    iv: b64(iv),
+    data: b64(ciphertext)
+  };
+}
+
+async function decryptVault(file, password) {
+  const salt = unb64(file.salt);
+  const iv = unb64(file.iv);
+  const key = await deriveKey(password, salt);
+  const ciphertext = unb64(file.data);
+  const plaintext = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ciphertext);
+  return JSON.parse(dec.decode(plaintext));
+}
+
+function checkCrypto() {
+  if (!window.crypto || !window.crypto.getRandomValues || !window.crypto.subtle) {
+    throw new Error('Web Crypto API is not available. This page must be served over HTTPS or localhost. Opening as a local file (file://) may disable encryption in some browsers. Try Chrome, Firefox, or host via GitHub Pages.');
+  }
+}
+
+/* ================= App state ================= */
+let data = null;
+let activeVault = 0;
+let editingEntryId = null;
+let masterPassword = null;
+let importedFile = null;
+let searchQuery = '';
+let lastActivity = Date.now();
+let autoLockMinutes = 10;
+
+const $ = s => document.querySelector(s);
+const vaultListEl = $('#vault-list');
+const contentEl = $('#content');
+
+function uid() { return Math.random().toString(36).slice(2,10); }
+
+/* ================= Settings ================= */
+function loadSettings() {
+  try {
+    const s = JSON.parse(localStorage.getItem('vaultSettings') || '{}');
+    autoLockMinutes = s.autoLockMinutes !== undefined ? s.autoLockMinutes : 10;
+    if (s.theme === 'light') document.body.classList.add('light');
+  } catch (e) { Diagnostics.error('loadSettings', e); }
+}
+function saveSettings() {
+  try {
+    localStorage.setItem('vaultSettings', JSON.stringify({
+      autoLockMinutes,
+      theme: document.body.classList.contains('light') ? 'light' : 'dark'
+    }));
+  } catch (e) { Diagnostics.error('saveSettings', e); }
+}
+
+/* ================= Password utilities ================= */
+function generatePassword(length = 20) {
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*-_+=~[](){}|;:,.<>?';
+  const arr = new Uint8Array(length);
+  crypto.getRandomValues(arr);
+  return Array.from(arr, x => chars[x % chars.length]).join('');
+}
+
+function getPasswordStrength(pw) {
+  let score = 0;
+  if (pw.length >= 8) score++;
+  if (pw.length >= 14) score++;
+  if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+  if (/[0-9]/.test(pw)) score++;
+  if (/[^a-zA-Z0-9]/.test(pw)) score++;
+  return Math.min(score, 5);
+}
+function strengthLabel(score) {
+  return ['Very weak','Weak','Fair','Good','Strong','Very strong'][score] || 'Unknown';
+}
+function strengthColor(score) {
+  return ['var(--danger)','var(--danger)','#d4a017','#5cc8a8','#5cc8a8','#3a9e7f'][score] || 'var(--line)';
+}
+
+function getVaultSizeKB() {
+  try {
+    if (!data) return 0;
+    return Math.round(new Blob([JSON.stringify(data)]).size / 1024);
+  } catch (e) { return 0; }
+}
+
+/* ================= Auto-lock ================= */
+function resetActivity() { lastActivity = Date.now(); }
+function checkAutoLock() {
+  if (!masterPassword || autoLockMinutes <= 0) return;
+  if (Date.now() - lastActivity > autoLockMinutes * 60000) {
+    Diagnostics.info('auto-lock', 'Vault auto-locked after ' + autoLockMinutes + ' min inactivity');
+    performLock();
+  }
+}
+setInterval(checkAutoLock, 30000);
+['mousedown','keydown','touchstart','scroll'].forEach(evt => {
+  document.addEventListener(evt, resetActivity, true);
+});
+
+function updateLockTimer() {
+  const el = $('#lock-timer');
+  if (!el || !masterPassword || autoLockMinutes <= 0) {
+    if (el) el.textContent = '';
+    return;
+  }
+  const remaining = Math.max(0, autoLockMinutes * 60000 - (Date.now() - lastActivity));
+  const mins = Math.floor(remaining / 60000);
+  const secs = Math.floor((remaining % 60000) / 1000);
+  el.textContent = 'Lock in ' + mins + ':' + secs.toString().padStart(2,'0');
+}
+setInterval(updateLockTimer, 1000);
+
+/* ================= Duplicate detection ================= */
+function getDuplicatePasswords() {
+  if (!data) return [];
+  const map = new Map();
+  data.vaults.forEach(v => {
+    v.entries.forEach(e => {
+      if (!e.pass) return;
+      if (!map.has(e.pass)) map.set(e.pass, []);
+      map.get(e.pass).push({ vault: v.name, app: e.app });
+    });
+  });
+  return Array.from(map.entries()).filter(([pass, items]) => items.length > 1);
+}
+
+function updateDuplicateBanner() {
+  const banner = $('#dup-banner');
+  if (!banner) return;
+  const dups = getDuplicatePasswords();
+  if (dups.length > 0) {
+    const apps = dups.flatMap(([pass, items]) => items.map(i => i.app)).join(', ');
+    banner.innerHTML = '⚠️ Duplicate passwords detected: ' + escapeHtml(apps.slice(0, 120)) + (apps.length > 120 ? '…' : '') + '. Consider using unique passwords.';
+    banner.style.display = 'block';
+  } else {
+    banner.style.display = 'none';
+  }
+}
+
+/* ================= Lock screen ================= */
+document.querySelectorAll('.lock-tab').forEach(tab => {
+  tab.onclick = () => {
+    document.querySelectorAll('.lock-tab').forEach(t=>t.classList.remove('active'));
+    document.querySelectorAll('.lock-panel').forEach(p=>p.classList.remove('active'));
+    tab.classList.add('active');
+    $('#panel-' + tab.dataset.tab).classList.add('active');
+    hideLockError();
+  };
+});
+
+function normalizeData(d) {
+  if(!d || !Array.isArray(d.vaults)) throw new Error('bad format');
+  d.vaults.forEach(v => {
+    if(!Array.isArray(v.entries)) v.entries = [];
+    v.entries.forEach(e => {
+      if(!e.id) e.id = uid();
+      if(!Array.isArray(e.images)) e.images = [];
+      if(typeof e.notes !== 'string') e.notes = e.notes || '';
+    });
+  });
+  return d;
+}
+
+let pendingLegacyData = null;
+
+$('#choose-legacy-btn').onclick = () => $('#legacy-file-input').click();
+$('#legacy-file-input').onchange = (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      pendingLegacyData = normalizeData(parsed);
+      $('#legacy-status').textContent = '✓ ' + file.name + ' — ' + pendingLegacyData.vaults.length + ' tab(s) will be imported';
+      Diagnostics.info('legacy-import', 'Loaded legacy file with ' + pendingLegacyData.vaults.length + ' vaults');
+    }catch(err){
+      pendingLegacyData = null;
+      $('#legacy-status').textContent = 'Could not read that file — starting fresh instead';
+      Diagnostics.error('legacy-import', err);
+    }
+  };
+  reader.onerror = () => {
+    Diagnostics.error('legacy-import', new Error('FileReader failed'));
+  };
+  reader.readAsText(file);
+};
+
+$('#choose-file-btn').onclick = () => $('#file-input').click();
+$('#file-input').onchange = (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const parsed = JSON.parse(reader.result);
+      if(parsed.format !== 'local-vault-v1') throw new Error('bad format');
+      importedFile = parsed;
+      $('#import-status').textContent = '✓ ' + file.name;
+      Diagnostics.info('import', 'Encrypted vault file selected: ' + file.name);
+    }catch(err){
+      importedFile = null;
+      $('#import-status').textContent = 'Not a valid vault file';
+      Diagnostics.error('import-select', err);
+    }
+  };
+  reader.onerror = () => {
+    Diagnostics.error('import-select', new Error('FileReader failed'));
+  };
+  reader.readAsText(file);
+};
+
+function showLockError(msg){
+  const el = $('#lock-error');
+  el.textContent = msg;
+  el.style.display = 'block';
+}
+function hideLockError(){ $('#lock-error').style.display = 'none'; }
+
+function updateStrength(inputId, fillId, labelId, containerId) {
+  const pw = $(inputId).value;
+  const container = $(containerId);
+  if (pw.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = 'block';
+  const score = getPasswordStrength(pw);
+  $(fillId).style.width = (score / 5 * 100) + '%';
+  $(fillId).style.background = strengthColor(score);
+  $(labelId).textContent = strengthLabel(score);
+  $(labelId).style.color = strengthColor(score);
+}
+
+$('#new-pass').addEventListener('input', () => updateStrength('#new-pass', '#new-pass-strength-fill', '#new-pass-strength-label', '#new-pass-strength'));
+
+$('#create-btn').onclick = () => {
+  try {
+    checkCrypto();
+    const p1 = $('#new-pass').value;
+    const p2 = $('#new-pass-confirm').value;
+    if(!p1 || p1.length < 4){ showLockError('Choose a password at least 4 characters long.'); return; }
+    if(p1 !== p2){ showLockError('Passwords do not match.'); return; }
+    masterPassword = p1;
+    data = pendingLegacyData ? pendingLegacyData : { vaults: [
+      { name: "coolguy1@gmail.com", entries: [] },
+      { name: "coolerguy22@gmail.com", entries: [] }
+    ]};
+    Diagnostics.info('vault', 'New vault created with ' + data.vaults.length + ' tabs');
+    enterApp();
+  } catch (err) {
+    Diagnostics.error('create', err);
+    showLockError(err.message);
+  }
+};
+
+$('#unlock-btn').onclick = async () => {
+  hideLockError();
+  try {
+    checkCrypto();
+    if(!importedFile){ showLockError('Choose your encrypted vault file first.'); return; }
+    const pass = $('#open-pass').value;
+    if(!pass){ showLockError('Enter your master password.'); return; }
+    const decrypted = await decryptVault(importedFile, pass);
+    data = normalizeData(decrypted);
+    masterPassword = pass;
+    Diagnostics.info('vault', 'Vault unlocked: ' + data.vaults.length + ' tabs, ' + data.vaults.reduce((a,v)=>a+v.entries.length,0) + ' entries');
+    enterApp();
+  } catch (err) {
+    Diagnostics.error('unlock', err);
+    showLockError('Wrong password, or the file is corrupted.');
+  }
+};
+
+function enterApp(){
+  activeVault = 0;
+  searchQuery = '';
+  if ($('#search-input')) $('#search-input').value = '';
+  if ($('#search-clear')) $('#search-clear').style.display = 'none';
+  $('#lock-screen').style.display = 'none';
+  $('#app').classList.add('show');
+  lastActivity = Date.now();
+  render();
+}
+
+function performLock() {
+  data = null;
+  masterPassword = null;
+  importedFile = null;
+  searchQuery = '';
+  $('#new-pass').value = '';
+  $('#new-pass-confirm').value = '';
+  $('#open-pass').value = '';
+  $('#import-status').textContent = 'No file selected';
+  $('#legacy-status').textContent = 'No file selected — leave blank to start fresh';
+  $('#new-pass-strength').style.display = 'none';
+  $('#app').classList.remove('show');
+  $('#lock-screen').style.display = 'flex';
+}
+
+$('#lock-btn').onclick = () => {
+  if(confirm('Lock the vault? Export first if you have unsaved changes you want to keep.')){
+    Diagnostics.info('vault', 'Vault manually locked');
+    performLock();
+  }
+};
+
+/* ================= Rendering ================= */
+function render(){
+  renderSidebar();
+  renderContent();
+}
+
+function renderSidebar(){
+  vaultListEl.innerHTML = '';
+  if (!data) return;
+  data.vaults.forEach((v, i) => {
+    const el = document.createElement('div');
+    el.className = 'vault-item' + (i===activeVault ? ' active' : '');
+    el.innerHTML = '<span>' + escapeHtml(v.name) + '</span>' +
+      '<span style="display:flex;align-items:center;gap:6px;">' +
+        '<span class="count">' + v.entries.length + '</span>' +
+        '<button class="vault-del" title="Delete tab">✕</button>' +
+      '</span>';
+    el.querySelector('.vault-del').onclick = (e) => {
+      e.stopPropagation();
+      if(confirm('Delete tab "' + v.name + '" and all its entries?')){
+        data.vaults.splice(i,1);
+        if(activeVault>=data.vaults.length) activeVault = Math.max(0,data.vaults.length-1);
+        render();
+      }
+    };
+    el.onclick = () => {
+      activeVault = i;
+      searchQuery = '';
+      if ($('#search-input')) $('#search-input').value = '';
+      if ($('#search-clear')) $('#search-clear').style.display = 'none';
+      render();
+    };
+    vaultListEl.appendChild(el);
+  });
+}
+
+function getVisibleEntries(vault) {
+  if (!searchQuery) return vault.entries;
+  const q = searchQuery.toLowerCase();
+  return vault.entries.filter(e =>
+    e.app.toLowerCase().includes(q) ||
+    e.user.toLowerCase().includes(q) ||
+    (e.notes || '').toLowerCase().includes(q)
+  );
+}
+
+function renderContent(){
+  const v = data.vaults[activeVault];
+  if(!v){
+    $('#vault-title').textContent = '—';
+    $('#vault-sub').textContent = 'add an account tab to get started';
+    contentEl.innerHTML = '';
+    return;
+  }
+  $('#vault-title').textContent = v.name;
+
+  const visible = getVisibleEntries(v);
+  $('#vault-sub').textContent = searchQuery
+    ? visible.length + ' of ' + v.entries.length + ' entries matching "' + searchQuery + '"'
+    : v.entries.length + ' ' + (v.entries.length===1?'entry':'entries');
+
+  updateDuplicateBanner();
+
+  if(visible.length===0){
+    contentEl.innerHTML = searchQuery
+      ? '<div id="empty"><div class="big">No matches.</div>Try a different search term.</div>'
+      : '<div id="empty"><div class="big">Nothing saved here yet.</div>Click "+ Add entry" to store your first login for ' + escapeHtml(v.name) + '.</div>';
+    return;
+  }
+
+  const isSearching = !!searchQuery;
+  const canDrag = !isSearching && v.entries.length > 1;
+
+  let rows = visible.map(e => `
+    <tr data-id="${e.id}" ${canDrag ? 'draggable="true"' : ''}>
+      <td class="drag-cell" style="width:24px;padding-right:0;"><span class="drag-handle" title="Drag to reorder">⋮⋮</span></td>
+      <td class="app">${escapeHtml(e.app)}</td>
+      <td class="user">
+        ${escapeHtml(e.user)}
+        <button class="copy-user-btn" title="Copy username">⧉</button>
+      </td>
+      <td class="pass">
+        <div class="pass-cell">
+          <span class="pass-text" data-shown="0">••••••••</span>
+          <button class="eye" title="Show/hide">👁</button>
+          <button class="copy-btn" title="Copy password">⧉</button>
+        </div>
+      </td>
+      <td class="notes">${escapeHtml(e.notes||'')}${e.images && e.images.length ? '<br><button class="img-indicator" data-view-images="' + e.id + '">🖼 ' + e.images.length + ' image' + (e.images.length>1?'s':'') + '</button>' : ''}</td>
+      <td class="row-actions">
+        <button class="edit" title="Edit">✎</button>
+        <button class="del" title="Delete">🗑</button>
+      </td>
+    </tr>
+  `).join('');
+
+  contentEl.innerHTML = `
+    <table class="${isSearching ? 'searching' : ''}">
+      <thead><tr>
+        <th class="drag-header" style="width:24px;"></th>
+        <th style="width:18%">App / Website</th>
+        <th style="width:18%">Username</th>
+        <th style="width:20%">Password</th>
+        <th>Notes</th>
+        <th style="width:70px"></th>
+      </tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  contentEl.querySelectorAll('tbody tr').forEach(tr => {
+    const id = tr.dataset.id;
+    const entry = v.entries.find(e=>e.id===id);
+    if (!entry) return;
+
+    const passSpan = tr.querySelector('.pass-text');
+    tr.querySelector('.eye').onclick = () => {
+      const shown = passSpan.dataset.shown === '1';
+      passSpan.textContent = shown ? '••••••••' : entry.pass;
+      passSpan.dataset.shown = shown ? '0' : '1';
+    };
+    tr.querySelector('.copy-btn').onclick = () => {
+      navigator.clipboard.writeText(entry.pass).then(()=>toast('Password copied'));
+    };
+    tr.querySelector('.copy-user-btn').onclick = () => {
+      navigator.clipboard.writeText(entry.user).then(()=>toast('Username copied'));
+    };
+    tr.querySelector('.edit').onclick = () => openModal(entry);
+    const imgBtn = tr.querySelector('[data-view-images]');
+    if(imgBtn){ imgBtn.onclick = () => openLightbox(entry.images); }
+    tr.querySelector('.del').onclick = () => {
+      if(confirm('Delete entry "' + entry.app + '"?')){
+        v.entries = v.entries.filter(e=>e.id!==entry.id);
+        render();
+      }
+    };
+
+    if (canDrag) {
+      tr.addEventListener('dragstart', (e) => {
+        e.dataTransfer.setData('text/plain', tr.dataset.id);
+        e.dataTransfer.effectAllowed = 'move';
+        tr.classList.add('dragging');
+      });
+      tr.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        const dragging = contentEl.querySelector('tr.dragging');
+        if (!dragging || dragging === tr) return;
+        const rect = tr.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        tr.classList.remove('drag-over-top', 'drag-over-bottom');
+        tr.classList.add(e.clientY < mid ? 'drag-over-top' : 'drag-over-bottom');
+      });
+      tr.addEventListener('dragleave', () => {
+        tr.classList.remove('drag-over-top', 'drag-over-bottom');
+      });
+      tr.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        tr.classList.remove('drag-over-top', 'drag-over-bottom');
+        const draggedId = e.dataTransfer.getData('text/plain');
+        const targetId = tr.dataset.id;
+        if (draggedId === targetId) return;
+
+        const draggedIdx = v.entries.findIndex(en => en.id === draggedId);
+        const targetIdx = v.entries.findIndex(en => en.id === targetId);
+        if (draggedIdx === -1 || targetIdx === -1) return;
+
+        const [moved] = v.entries.splice(draggedIdx, 1);
+        let adjustedTarget = targetIdx;
+        if (targetIdx > draggedIdx) adjustedTarget--;
+        const rect = tr.getBoundingClientRect();
+        const mid = rect.top + rect.height / 2;
+        const pos = e.clientY < mid ? 'before' : 'after';
+        const insertIdx = pos === 'before' ? adjustedTarget : adjustedTarget + 1;
+        v.entries.splice(insertIdx, 0, moved);
+        Diagnostics.info('reorder', 'Moved entry ' + moved.app + ' to position ' + insertIdx);
+        render();
+      });
+      tr.addEventListener('dragend', () => {
+        tr.classList.remove('dragging');
+        contentEl.querySelectorAll('tr').forEach(r => r.classList.remove('drag-over-top', 'drag-over-bottom'));
+      });
+    }
+  });
+}
+
+function escapeHtml(s){
+  return String(s??'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+/* ================= Search ================= */
+$('#search-input').addEventListener('input', (e) => {
+  searchQuery = e.target.value.trim();
+  $('#search-clear').style.display = searchQuery ? 'block' : 'none';
+  renderContent();
+});
+$('#search-clear').onclick = () => {
+  $('#search-input').value = '';
+  searchQuery = '';
+  $('#search-clear').style.display = 'none';
+  renderContent();
+};
+
+/* ================= Entry modal ================= */
+let modalImages = [];
+
+function openModal(entry){
+  editingEntryId = entry ? entry.id : null;
+  $('#modal-title').textContent = entry ? 'Edit entry' : 'New entry';
+  $('#f-app').value = entry ? entry.app : '';
+  $('#f-user').value = entry ? entry.user : '';
+  $('#f-pass').value = entry ? entry.pass : '';
+  $('#f-notes').value = entry ? (entry.notes||'') : '';
+  modalImages = entry && entry.images ? entry.images.map(i=>({...i})) : [];
+  $('#f-pass-strength').style.display = 'none';
+  renderModalThumbs();
+  $('#overlay').classList.add('show');
+  $('#f-app').focus();
+}
+function closeModal(){ $('#overlay').classList.remove('show'); }
+
+function renderModalThumbs(){
+  const wrap = $('#img-thumbs');
+  wrap.innerHTML = '';
+  modalImages.forEach((img, idx) => {
+    const t = document.createElement('div');
+    t.className = 'thumb-wrap';
+    t.innerHTML = '<img src="' + img.dataUrl + '"><button class="thumb-remove" title="Remove">✕</button>';
+    t.querySelector('img').onclick = () => openLightbox(modalImages, idx);
+    t.querySelector('.thumb-remove').onclick = () => { modalImages.splice(idx,1); renderModalThumbs(); };
+    wrap.appendChild(t);
+  });
+}
+
+$('#img-dropzone').onclick = () => $('#image-input').click();
+$('#image-input').onchange = (e) => {
+  const files = Array.from(e.target.files || []);
+  if(!files.length) return;
+  files.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      modalImages.push({ id: uid(), dataUrl: reader.result });
+      renderModalThumbs();
+    };
+    reader.onerror = () => {
+      Diagnostics.error('image-upload', new Error('Failed to read image: ' + file.name));
+    };
+    reader.readAsDataURL(file);
+  });
+  e.target.value = '';
+};
+
+$('#gen-pass-btn').onclick = () => {
+  try {
+    const pw = generatePassword();
+    $('#f-pass').value = pw;
+    $('#f-pass').dispatchEvent(new Event('input'));
+    navigator.clipboard.writeText(pw).then(() => toast('Generated password copied'));
+  } catch (err) {
+    Diagnostics.error('password-gen', err);
+  }
+};
+
+$('#f-pass').addEventListener('input', () => {
+  const pw = $('#f-pass').value;
+  const container = $('#f-pass-strength');
+  if (pw.length === 0) { container.style.display = 'none'; return; }
+  container.style.display = 'block';
+  const score = getPasswordStrength(pw);
+  $('#f-pass-strength-fill').style.width = (score / 5 * 100) + '%';
+  $('#f-pass-strength-fill').style.background = strengthColor(score);
+  $('#f-pass-strength-label').textContent = strengthLabel(score);
+  $('#f-pass-strength-label').style.color = strengthColor(score);
+});
+
+/* ================= Lightbox ================= */
+function openLightbox(images, startIdx){
+  if(!images || !images.length) return;
+  startIdx = startIdx || 0;
+  const main = $('#lightbox-main');
+  const strip = $('#lightbox-strip');
+  strip.innerHTML = '';
+  images.forEach((img, i) => {
+    const thumb = document.createElement('img');
+    thumb.src = img.dataUrl;
+    thumb.className = i===startIdx ? 'active' : '';
+    thumb.onclick = () => {
+      main.src = img.dataUrl;
+      strip.querySelectorAll('img').forEach(t=>t.classList.remove('active'));
+      thumb.classList.add('active');
+    };
+    strip.appendChild(thumb);
+  });
+  main.src = images[startIdx].dataUrl;
+  $('#lightbox').classList.add('show');
+}
+$('#lightbox-close').onclick = () => $('#lightbox').classList.remove('show');
+$('#lightbox').onclick = (e) => { if(e.target.id==='lightbox') $('#lightbox').classList.remove('show'); };
+
+$('#modal-cancel').onclick = closeModal;
+$('#overlay').onclick = (e) => { if(e.target.id==='overlay') closeModal(); };
+
+$('#modal-save').onclick = () => {
+  try {
+    const app = $('#f-app').value.trim();
+    if(!app){ $('#f-app').focus(); return; }
+    const v = data.vaults[activeVault];
+    if(!v) return;
+    if(editingEntryId){
+      const e = v.entries.find(e=>e.id===editingEntryId);
+      e.app = app; e.user = $('#f-user').value.trim(); e.pass = $('#f-pass').value; e.notes = $('#f-notes').value.trim();
+      e.images = modalImages;
+    } else {
+      v.entries.push({ id: uid(), app, user: $('#f-user').value.trim(), pass: $('#f-pass').value, notes: $('#f-notes').value.trim(), images: modalImages });
+    }
+    closeModal();
+    render();
+  } catch (err) {
+    Diagnostics.error('modal-save', err);
+  }
+};
+
+$('#new-entry').onclick = () => {
+  if(data.vaults.length===0){ toast('Add an account tab first'); return; }
+  openModal(null);
+};
+
+$('#add-vault').onclick = () => {
+  const name = prompt('Email / account name for this tab:');
+  if(name && name.trim()){
+    data.vaults.push({ name: name.trim(), entries: [] });
+    activeVault = data.vaults.length-1;
+    render();
+  }
+};
+
+/* ================= Export ================= */
+$('#export-btn').onclick = async () => {
+  try {
+    Diagnostics.info('export', 'Starting vault export');
+    if(!masterPassword){ toast('Not unlocked'); return; }
+    checkCrypto();
+    const encrypted = await encryptVault(data, masterPassword);
+    const json = JSON.stringify(encrypted);
+    Diagnostics.info('export', 'Export payload size: ' + (json.length / 1024).toFixed(1) + ' KB');
+    const blob = new Blob([json], {type:'application/json'});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'vault-data.enc.json';
+    a.style.display = 'none';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast('Exported encrypted vault');
+    Diagnostics.info('export', 'Export completed successfully');
+  } catch (err) {
+    Diagnostics.error('export', err);
+    alert('Export failed — see diagnostics for details.' + err.name + ': ' + err.message);
+  }
+};
+
+/* ================= Settings & Diagnostics overlays ================= */
+$('#settings-btn').onclick = () => {
+  $('#setting-autolock').value = String(autoLockMinutes);
+  $('#setting-theme').value = document.body.classList.contains('light') ? 'light' : 'dark';
+  $('#vault-size').textContent = getVaultSizeKB() + ' KB';
+  $('#settings-overlay').classList.add('show');
+};
+$('#settings-cancel').onclick = () => { $('#settings-overlay').classList.remove('show'); };
+$('#settings-save').onclick = () => {
+  autoLockMinutes = parseInt($('#setting-autolock').value, 10);
+  const theme = $('#setting-theme').value;
+  if (theme === 'light') document.body.classList.add('light');
+  else document.body.classList.remove('light');
+  saveSettings();
+  $('#settings-overlay').classList.remove('show');
+  toast('Settings saved');
+};
+$('#settings-overlay').onclick = (e) => { if (e.target.id === 'settings-overlay') $('#settings-overlay').classList.remove('show'); };
+
+function renderDiagnostics() {
+  const logEl = $('#diag-log');
+  const logs = Diagnostics.getLogs();
+  if (logs.length === 0) {
+    logEl.innerHTML = '<span style="color:var(--muted)">No events logged yet.</span>';
+    return;
+  }
+  logEl.innerHTML = logs.map(l => {
+    const cls = l.type === 'ERROR' ? 'diag-err' : l.type === 'WARN' ? 'diag-warn' : 'diag-info';
+    return '<div class="diag-row"><span class="diag-time">' + escapeHtml(l.time) + '</span> ' +
+      '<span class="' + cls + '">[' + escapeHtml(l.type) + ']</span> ' +
+      '<b>' + escapeHtml(l.source) + '</b>: ' + escapeHtml(l.message) +
+      (l.detail ? '<br><span style="color:var(--muted);font-size:11px;">' + escapeHtml(l.detail).replace(/\n/g,'<br>') + '</span>' : '') +
+      '</div>';
+  }).join('');
+}
+
+$('#diag-btn').onclick = () => {
+  renderDiagnostics();
+  $('#diag-overlay').classList.add('show');
+};
+$('#lock-diag-btn').onclick = () => {
+  renderDiagnostics();
+  $('#diag-overlay').classList.add('show');
+};
+$('#diag-close').onclick = () => { $('#diag-overlay').classList.remove('show'); };
+$('#diag-clear').onclick = () => { Diagnostics.clear(); renderDiagnostics(); };
+$('#diag-overlay').onclick = (e) => { if (e.target.id === 'diag-overlay') $('#diag-overlay').classList.remove('show'); };
+
+/* ================= Theme toggle ================= */
+$('#theme-btn').onclick = () => {
+  const isLight = document.body.classList.toggle('light');
+  $('#theme-btn').textContent = isLight ? '☀️ Theme' : '🌙 Theme';
+  saveSettings();
+};
+
+/* ================= Toast ================= */
+function toast(msg, duration, isError){
+  const t = $('#toast');
+  t.textContent = msg;
+  t.style.borderColor = isError ? 'var(--danger)' : 'var(--line)';
+  t.style.color = isError ? 'var(--danger)' : 'var(--text)';
+  t.classList.add('show');
+  clearTimeout(t._timer);
+  t._timer = setTimeout(()=>t.classList.remove('show'), duration || 1800);
+}
+
+/* ================= Keyboard shortcuts ================= */
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape') {
+    closeModal();
+    $('#settings-overlay').classList.remove('show');
+    $('#diag-overlay').classList.remove('show');
+    $('#lightbox').classList.remove('show');
+  }
+  if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+    e.preventDefault();
+    const searchInput = $('#search-input');
+    if (searchInput) searchInput.focus();
+  }
+});
+
+/* ================= Init ================= */
+loadSettings();
+if (document.body.classList.contains('light')) {
+  $('#theme-btn').textContent = '☀️ Theme';
+}
+Diagnostics.info('init', 'Vault Enhanced v2.0 loaded');
+</script>
+</body>
+</html>
