@@ -19,7 +19,7 @@ A single-file, self-hosted password vault. No server, no database, no account �
 
 ## Current limitations
 
-- **Single-user only.** Everyone who has the exported file and master password has full read/write access — there's currently no way to give someone "read-only" access without also giving them edit rights. A real admin/read-only split would need an actual backend with per-user accounts, which this project doesn't have yet.
+- **Single-user only.** Everyone who has the exported file and master password has full read/write access.
 - Nothing auto-saves — you must export after making changes, or edits are lost when you close the tab.
 - Icons for platforms are optional; if you skip uploading one, entries just show as plain text.
 
