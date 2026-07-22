@@ -171,7 +171,7 @@ Gmail,https://gmail.com,john@gmail.com,SecurePass123,Recovery: 555-0199
 
 ---
 
-## 🏢 Company Vault (Admin + Employee)
+## 🏢 Company Vault (Admin + Employee) (inprogress...)
 
 This repository also includes a **Company Vault** variant for teams:
 
