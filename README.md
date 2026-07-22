@@ -267,3 +267,4 @@ MIT — Use freely, modify, distribute. No warranty implied. You are responsible
 ---
 
 > *"The only password manager you can fully audit by reading one HTML file."*
+*"Still improving it"*
