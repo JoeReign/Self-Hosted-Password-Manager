@@ -171,15 +171,6 @@ Gmail,https://gmail.com,john@gmail.com,SecurePass123,Recovery: 555-0199
 
 ---
 
-## 🏢 Company Vault (Admin + Employee) (inprogress...)
-
-This repository also includes a **Company Vault** variant for teams:
-
-| File | Purpose | Access |
-|------|---------|--------|
-| `vault-admin.html` | Admin/Owner | Full control — create, edit, delete, export, import CSV, settings, stats, diagnostics |
-| `vault-employee.html` | Employee | Read-only — upload same `.enc.json` + password, view/copy only |
-
 **Workflow:**
 1. Admin manages vault in `vault-admin.html`
 2. Admin exports `.enc.json` to shared storage (Google Drive)
@@ -255,8 +246,7 @@ python3 -m http.server 8000
 | File | Description |
 |------|-------------|
 | `Vault.html` | **Personal Vault** — full-featured password manager with platform icons |
-| `vault-admin.html` | **Company Admin** — full control, exports encrypted JSON |
-| `vault-employee.html` | **Company Employee** — read-only viewer for shared vaults |
+
 
 ---
 
