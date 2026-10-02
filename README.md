@@ -1,260 +1,128 @@
-# 🔐 Vault — Local-First Password Manager
+# Self-Hosted Password Manager
 
-> AES-256 encrypted. Entirely in your browser. Nothing leaves your device unless you export it.
+A local-first password vault with browser-side encryption, portable JSON backups, and an installable web interface for desktop, phones, and tablets.
 
-Vault is a zero-trust, client-side password manager that runs entirely in a single HTML file. No servers, no accounts, no tracking — just strong encryption and your data.
+**GitHub Pages address:** [joereign.github.io/Self-Hosted-Password-Manager](https://joereign.github.io/Self-Hosted-Password-Manager/)
 
----
+The link becomes available after the repository's GitHub Pages deployment succeeds. The new application is in `vault-v2/`; the original single-file application remains in `Vault/Vault.html`.
 
-## ✨ Features
+## Use the app
 
-### 🔒 Security & Encryption
-- **AES-256-GCM encryption** with PBKDF2 key derivation (250,000 iterations)
-- **Unique salt & IV** generated per vault for maximum entropy
-- **No server communication** — everything happens inside your browser
-- **Clipboard auto-clear** — copied passwords are wiped from clipboard after 30 seconds
-- **Auto-lock** — vault locks after configurable inactivity period
-- **No password reset** — if you forget your master password, your data is mathematically unrecoverable
+1. Open the GitHub Pages link after publication.
+2. Create a vault with a long, unique master passphrase, or import your existing JSON file.
+3. Add entries and organize them into account groups.
+4. Watch the save status: changes are encrypted and saved on your device.
+5. Export an encrypted backup regularly and lock the vault when finished.
 
-### 📂 Vault Organization
-- **Multiple vaults/tabs** — organize passwords by email account, client, or category
-- **Drag-and-drop reordering** — rearrange entries by dragging the handle (⋮⋮)
-- **Search** — instant search across app names, usernames, notes, and URLs (`Ctrl+K`)
-- **Favorites** — star important entries for quick access
-- **Color tags** — red, green, blue, yellow, purple for visual grouping
+End users do not need a terminal, Python, Node.js, or a GitHub account to use the publicly hosted app. There is no master-password reset.
 
-### 🎮 Platform Icons
-- **Platform picker** — assign icons to entries (Discord, Gmail, Netflix, etc.)
-- **Custom platforms** — add your own platforms with uploaded icons (PNG/JPG/SVG)
-- **Editable platform library** — manage your platform list over time
+## Install on a device
 
-### 📝 Entry Management
-- **Add / Edit / Delete** entries with undo support
-- **Password generator** — cryptographically secure random passwords
-- **Password strength meter** — visual feedback on password quality
-- **Password history** — last 5 passwords kept per entry when changed
-- **Image attachments** — store recovery codes, QR codes, 2FA backups
-- **Lightbox viewer** — click images to view full-size with thumbnail strip
-- **Last modified** timestamps on every entry
-- **Empty field warnings** — highlights missing passwords, usernames, or URLs
+| Device | Installation |
+| --- | --- |
+| Samsung / Android | Open in Chrome or Samsung Internet. Use **Install app**, or the browser menu's **Install app / Add to Home screen** option. |
+| iPhone / iPad | Open in Safari → **Share → Add to Home Screen**. Enable **Open as Web App** if shown. |
+| Desktop | Use Chrome or Edge's install option; supported Safari versions on macOS offer **Add to Dock**. |
 
-### 🔍 Insights & Diagnostics
-- **Duplicate password detection** — warns when the same password is reused across entries
-- **Security dashboard** — overall security score, weak password count, reuse stats
-- **Diagnostics log** — tracks errors, warnings, and events for troubleshooting
-- **Vault size indicator** — see how large your encrypted vault is
+The app's **Install / help** button includes these instructions. Installation is optional: the browser version works too. Wait for **Ready for offline use** before relying on offline access. Offline availability depends on the browser retaining its saved app files and storage.
 
-### 🎨 UI & Customization
-- **Dark & Light themes** — toggle anytime, preference persists
-- **Compact view** — denser table layout for power users
-- **Keyboard shortcuts** — `Ctrl+K` to search, `Escape` to close modals
+## Features
 
-### 📤 Import / Export
-- **Export encrypted** — saves as `vault-data.enc.json` (AES-256)
-- **Import encrypted** — load your vault on any device with the file + password
-- **Import legacy JSON** — migrate from older unencrypted vault formats
-- **Import CSV** — bulk import from password managers (supports standard CSV columns: name, url, username, password, notes)
-- **Printable backup** — generates a printer-friendly backup sheet
+- **Light, Dark, Auto, Cyberpunk, and Forest themes.** Auto follows the operating system. Cyberpunk uses midnight backgrounds and pink/purple accents.
+- **Phone and tablet layouts.** Larger touch targets, collapsible navigation, and separate entry/detail screens on phones.
+- **Encrypted autosave and backups.** A current and previous encrypted browser snapshot, plus portable encrypted JSON exports.
+- **Legacy JSON imports.** Reads the original application's encrypted `local-vault-v1` files and supported plaintext JSON.
+- **Global search, groups, favorites, and password review.** Search spans groups; review flags missing, short, or reused passwords.
+- **Entry editing, password generation, history, and image attachments.** Existing supported platform metadata is preserved in exports.
+- **Master-passphrase changes and inactivity locking.** The vault locks after five minutes of inactivity.
+- **Installable offline app shell.** App updates wait until the vault is saved and locked.
 
----
+## Encryption and storage
 
-## 🚀 Quick Start
+New vaults use AES-256-GCM with a 128-bit authentication tag, PBKDF2-HMAC-SHA-256 at 600,000 iterations, a random salt, and a fresh IV for each encryption. Keys are non-extractable Web Crypto keys. The old-format reader retains the original 250,000 iterations so existing files remain readable.
 
-### Option 1: Open the File Directly
-1. Download `Vault.html`
-2. Double-click to open in your browser (Chrome, Firefox, Edge recommended)
-3. Click **"New vault"** tab
-4. Set a strong master password
-5. Start adding entries
+Vault data is not uploaded to GitHub or a vault server. Each visitor's encrypted vault is saved in their own browser storage. Same-origin requests fetch application files and offline updates. The service worker caches only allowlisted app assets; vault contents are not part of that cache.
 
-### Option 2: Host for Mobile Access
-Upload `Vault.html` to any static hosting (GitHub Pages, Netlify, Vercel, Cloudflare Pages) to access your vault from any device with a browser.
+Different devices do not automatically synchronize. To move a vault, export encrypted JSON, transfer the file, and import it on the next device using its master passphrase. An installed app and a browser tab may have separate storage. Moving to a different website address also creates a separate storage location, so export before switching.
 
-> ⚠️ **Important**: If opened via `file://` protocol, some browsers may restrict Web Crypto API. For full functionality, host via HTTPS or use Chrome/Firefox locally.
+Browser storage can be cleared or lost. Keep external encrypted backups and verify that they reopen. Copied passwords may remain in OS clipboard history.
 
----
+## JSON compatibility
 
-## 📖 End-to-End Workflow
+The new app opens:
 
-### 1. Create Your First Vault
-```
-Open Vault.html → "New vault" tab
-├── Import old data (optional)
-├── Set master password
-├── Confirm master password
-└── Click "Create vault"
-```
-Your vault starts with two default account tabs. You can rename these by deleting and recreating, or just use them as-is.
+- `local-vault-v1` encrypted exports with the existing master password.
+- Supported legacy plaintext JSON with a new master passphrase.
+- `local-vault-v2` exports.
 
-### 2. Add an Account Tab
-```
-Click "+ Add account (tab)" in sidebar
-└── Enter name (e.g., "work@company.com")
-```
+Known legacy fields are preserved: account groups, entries, usernames, passwords, notes, URLs, favorites, tags, timestamps, password history, platform metadata, and supported embedded images. Nullable platform icons are supported.
 
-### 3. Add an Entry
-```
-Click "+ Add entry"
-├── "What platform?" picker appears
-│   ├── Search existing platforms
-│   ├── Click a platform (e.g., Discord)
-│   └── Or click "+ Add new platform" to upload a custom icon
-├── Continue to entry form
-│   ├── App / Website name (auto-filled from platform)
-│   ├── Website URL
-│   ├── Username / Login
-│   ├── Password (or click "Generate")
-│   ├── Tag Color (optional)
-│   ├── Notes (recovery codes, 2FA, etc.)
-│   └── Images (drag & drop or click to upload)
-└── Click "Save"
+SVG and remote images, malformed records, duplicate IDs, unsupported versions, and oversized files produce an import error. Supported embedded images are PNG, JPEG, GIF, and WebP. New exports use v2 and cannot be opened by the old application. Original imported files are not modified.
+
+## Publish from GitHub — no terminal needed
+
+The included root workflow builds and tests `vault-v2/`, then publishes `vault-v2/dist` as the site's root.
+
+1. Extract the repository update ZIP on your computer.
+2. Open [JoeReign/Self-Hosted-Password-Manager](https://github.com/JoeReign/Self-Hosted-Password-Manager) on the `main` branch.
+3. Select **Add file → Upload files**.
+4. Drag the extracted **contents** into the upload area: `vault-v2`, `.github`, `README.md`, and `GITHUB_PAGES_SETUP.md`. Keep the folders intact and do not upload the ZIP itself or its outer extraction folder.
+5. Commit the files to `main`. If you use a new branch, merge its pull request into `main` before deploying.
+6. Open **Settings → Pages → Build and deployment → Source**, then select **GitHub Actions**. A workflow is already included; no additional template is needed.
+7. Open **Actions → Publish Vault → Run workflow**, select `main`, and run it.
+8. Wait for the build and deployment to finish successfully, then open the GitHub Pages address above.
+
+If a workflow ran before Pages was enabled and failed, enable Pages and run it again. After setup, commits to `main` automatically run the checks and publish the app.
+
+If your file picker does not show `.github`, use **Add file → Create new file**, enter `.github/workflows/pages.yml` as the filename, and paste the contents of that file from the package. Do this before running the workflow.
+
+Never add personal vault files or real credentials to this public repository.
+
+## Project structure
+
+| Path | Purpose |
+| --- | --- |
+| `.github/workflows/pages.yml` | GitHub Pages build, test, and deployment workflow |
+| `vault-v2/src/crypto/` | Key derivation, encryption, encoding, and password generation |
+| `vault-v2/src/vault/` | Data types and runtime validation |
+| `vault-v2/src/imports/` | Legacy format detection and migration |
+| `vault-v2/src/storage/` | Atomic encrypted snapshots |
+| `vault-v2/src/session/` | Key lifetime, unlocked state, and ordered saves |
+| `vault-v2/src/ui/` | Authentication, entry screens, controls, and navigation |
+| `vault-v2/src/preferences/` | Theme preferences and system-theme changes |
+| `vault-v2/src/pwa/` | Installation and app-update coordination |
+| `vault-v2/src/platform/` | Encrypted file download/share delivery |
+| `vault-v2/tests/` | Compatibility, security-boundary, persistence, and UI tests |
+| `Vault/Vault.html` | Original single-file application |
+
+## Development
+
+Requires Node.js 24 or newer. From the repository root:
+
+```sh
+cd vault-v2
+npm ci
+npm run dev
 ```
 
-### 4. Daily Use
-| Action | How |
-|--------|-----|
-| Search | `Ctrl+K` or click search box |
-| Copy password | Click ⧉ next to password |
-| Copy username | Click ⧉ next to username |
-| Show password | Click 👁 |
-| Edit entry | Click ✎ |
-| Delete entry | Click 🗑 (5-second undo available) |
-| Favorite | Click ☆/★ |
-| View images | Click 🖼 indicator |
-| Reorder | Drag ⋮⋮ handle up/down |
+To verify and build:
 
-### 5. Save Your Vault (Export)
-```
-Click "Export encrypted (.json)" in sidebar
-└── File downloads: vault-data.enc.json
+```sh
+npm test
+npm run build
 ```
 
-**Store this file securely:**
-- Google Drive / Dropbox / iCloud (encrypted at rest)
-- USB drive
-- Email to yourself
+The application has no third-party JavaScript runtime dependencies. Vite, TypeScript, and test dependencies are development tools. The lockfile is committed for reproducible installs.
 
-> 🔑 **You need BOTH the `.enc.json` file AND your master password** to unlock. Keep them separate for security.
+## Documentation and review status
 
-### 6. Reopen Your Vault
-```
-Open Vault.html → "Open existing" tab
-├── Choose your vault-data.enc.json file
-├── Enter master password
-└── Click "Unlock"
-```
+- [Architecture decisions](vault-v2/docs/architecture.md)
+- [Security model](vault-v2/docs/security.md)
+- [Code walkthrough](vault-v2/docs/walkthrough.md)
+- [Installation](vault-v2/docs/install.md)
+- [Verification record](vault-v2/docs/verification.md)
+- [GitHub Pages setup](GITHUB_PAGES_SETUP.md)
 
-### 7. Lock When Done
-```
-Click 🔒 in top-right of sidebar
-└── Confirm lock (or wait for auto-lock)
-```
+The build passes strict TypeScript checking and 22 automated tests. DOM and service-worker tests use simulated environments. Physical Samsung/iPhone/iPad testing, real-browser offline/install checks, and independent security review remain outstanding. This is a development release, not an audited password manager; use sample credentials while reviewing it.
 
----
-
-## 📋 CSV Import Format
-
-Bulk import from other password managers using CSV:
-
-```csv
-name,url,username,password,notes
-Discord,https://discord.com,john_doe,MyP@ssw0rd!,2FA enabled
-Gmail,https://gmail.com,john@gmail.com,SecurePass123,Recovery: 555-0199
-```
-
-**Supported column names:**
-- App name: `name`, `title`, `app`
-- URL: `url`, `login_url`, `uri`
-- Username: `username`, `login`, `user`
-- Password: `password`, `pass`, `passwd`
-- Notes: `notes`, `note`, `extra`
-
----
-
-**Workflow:**
-1. Admin manages vault in `vault-admin.html`
-2. Admin exports `.enc.json` to shared storage (Google Drive)
-3. Employees open `vault-employee.html`, upload the same file, enter password
-4. Employees can view, search, and copy credentials — but cannot edit, export, or print
-
----
-
-## 🔐 Security Architecture
-
-```
-┌─────────────────────────────────────┐
-│           Your Browser              │
-│  ┌─────────────────────────────┐    │
-│  │  Vault.html (single file)   │    │
-│  │  ┌─────────────────────┐   │    │
-│  │  │  Web Crypto API      │   │    │
-│  │  │  ├── PBKDF2 (250k)   │   │    │
-│  │  │  ├── AES-256-GCM     │   │    │
-│  │  │  └── Random Salt+IV  │   │    │
-│  │  └─────────────────────┘   │    │
-│  │  ┌─────────────────────┐   │    │
-│  │  │  Memory-only state  │   │    │
-│  │  │  (never persisted)  │   │    │
-│  │  └─────────────────────┘   │    │
-│  └─────────────────────────────┘    │
-│              │                      │
-│              ▼                      │
-│  ┌─────────────────────────────┐     │
-│  │  vault-data.enc.json      │     │
-│  │  (your exported file)     │     │
-│  └─────────────────────────────┘     │
-└─────────────────────────────────────┘
-              │
-              ▼
-    Google Drive / USB / Email
-```
-
-- **No network requests** are made by the app
-- **No analytics, no tracking, no cookies**
-- **Memory-only** — data lives in RAM while unlocked, gone on page close
-- **Encrypted at rest** — exported `.enc.json` is useless without the password
-
----
-
-## ⚠️ Important Warnings
-
-1. **No password recovery** — If you forget your master password, your data is lost forever. There is no backdoor.
-2. **Back up regularly** — Export your `.enc.json` after making changes. The HTML file does not auto-save.
-3. **Keep file + password separate** — Anyone with both can decrypt your vault.
-4. **Clipboard clearing** — We attempt to clear the clipboard after 30s, but browsers may restrict this. Manually clear sensitive data when done.
-5. **Browser compatibility** — Requires a modern browser with Web Crypto API support (Chrome 37+, Firefox 34+, Safari 7+, Edge 12+).
-
----
-
-## 🛠️ Development
-
-This is a single-file application. No build step, no dependencies, no npm.
-
-```bash
-# Just open the file
-open Vault.html
-
-# Or serve locally for testing
-python3 -m http.server 8000
-# Then open http://localhost:8000/Vault.html
-```
-
----
-
-## 📄 Files
-
-| File | Description |
-|------|-------------|
-| `Vault.html` | **Personal Vault** — full-featured password manager with platform icons |
-
-
----
-
-## 📜 License
-
-MIT — Use freely, modify, distribute. No warranty implied. You are responsible for your own data security.
-
----
-
-> *"The only password manager you can fully audit by reading one HTML file."*
-*"Still improving it"*
+The initial v2 implementation used AI assistance. Changes should be judged through readable source, explainable decisions, reproducible checks, and independent review.
