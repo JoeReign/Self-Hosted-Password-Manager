@@ -102,7 +102,6 @@ The application has no third-party JavaScript runtime dependencies. Vite, TypeSc
 - [Code walkthrough](vault-v2/docs/walkthrough.md)
 - [Installation](vault-v2/docs/install.md)
 - [Verification record](vault-v2/docs/verification.md)
-- [GitHub Pages setup](GITHUB_PAGES_SETUP.md)
 
 The build passes strict TypeScript checking and 22 automated tests. DOM and service-worker tests use simulated environments. Physical Samsung/iPhone/iPad testing, real-browser offline/install checks, and independent security review remain outstanding. This is a development release, not an audited password manager; use sample credentials while reviewing it.
 
