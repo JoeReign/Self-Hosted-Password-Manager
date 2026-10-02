@@ -59,25 +59,6 @@ Known legacy fields are preserved: account groups, entries, usernames, passwords
 
 SVG and remote images, malformed records, duplicate IDs, unsupported versions, and oversized files produce an import error. Supported embedded images are PNG, JPEG, GIF, and WebP. New exports use v2 and cannot be opened by the old application. Original imported files are not modified.
 
-## Publish from GitHub — no terminal needed
-
-The included root workflow builds and tests `vault-v2/`, then publishes `vault-v2/dist` as the site's root.
-
-1. Extract the repository update ZIP on your computer.
-2. Open [JoeReign/Self-Hosted-Password-Manager](https://github.com/JoeReign/Self-Hosted-Password-Manager) on the `main` branch.
-3. Select **Add file → Upload files**.
-4. Drag the extracted **contents** into the upload area: `vault-v2`, `.github`, `README.md`, and `GITHUB_PAGES_SETUP.md`. Keep the folders intact and do not upload the ZIP itself or its outer extraction folder.
-5. Commit the files to `main`. If you use a new branch, merge its pull request into `main` before deploying.
-6. Open **Settings → Pages → Build and deployment → Source**, then select **GitHub Actions**. A workflow is already included; no additional template is needed.
-7. Open **Actions → Publish Vault → Run workflow**, select `main`, and run it.
-8. Wait for the build and deployment to finish successfully, then open the GitHub Pages address above.
-
-If a workflow ran before Pages was enabled and failed, enable Pages and run it again. After setup, commits to `main` automatically run the checks and publish the app.
-
-If your file picker does not show `.github`, use **Add file → Create new file**, enter `.github/workflows/pages.yml` as the filename, and paste the contents of that file from the package. Do this before running the workflow.
-
-Never add personal vault files or real credentials to this public repository.
-
 ## Project structure
 
 | Path | Purpose |
