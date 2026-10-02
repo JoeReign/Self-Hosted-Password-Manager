@@ -1,3 +1,4 @@
+import { msg, initializeLanguage } from './i18n/locale';
 import './style.css';
 import { BrowserRepository } from './storage/repository';
 import { VaultApp } from './ui/app';
@@ -5,6 +6,7 @@ import { element } from './ui/dom';
 import { AppControls } from './ui/app-controls';
 import { registerOfflineApp } from './pwa/updates';
 
+initializeLanguage();
 const controls = new AppControls(document.querySelector<HTMLElement>('#app-controls')!);
 let app: VaultApp | null = null;
 void registerOfflineApp(activate => controls.offerUpdate(activate, () => !!app?.canReload()),
@@ -20,7 +22,7 @@ async function boot(): Promise<void> {
   // Only one app instance may use this origin's browser vault at a time.
   await navigator.locks.request(`local-vault-writer:${scope}`, { ifAvailable: true }, async lock => {
     if (!lock) {
-      root.append(element('p', 'notice', 'Vault is already open in another tab. Close that tab, then reload this one.'));
+      root.append(element('p', 'notice', msg('Vault is already open in another tab. Close that tab, then reload this one.')));
       return;
     }
     app = new VaultApp(root, new BrowserRepository(scope));
@@ -32,7 +34,7 @@ async function boot(): Promise<void> {
 }
 
 void boot().catch(() => {
-  root.replaceChildren(element('p', 'notice error', 'Vault could not start. Use HTTPS or localhost and allow browser storage.'));
+  root.replaceChildren(element('p', 'notice error', msg('Vault could not start. Use HTTPS or localhost and allow browser storage.')));
 });
 // BFCache restores have lost their writer lock and must reinitialize.
 window.addEventListener('pageshow', event => { if (event.persisted) location.reload(); });

@@ -139,3 +139,32 @@ test('mobile navigation opens entry details, returns to the list, and closes on 
     assert.equal(app.canReload(), true);
   } finally { app.dispose(); dom.window.close(); }
 });
+
+test('Arabic switches live without changing vault content or losing an unsaved draft', async () => {
+  const { setLanguage } = await import('../src/i18n/locale');
+  const { dom, root, app, repository } = await fixture();
+  try {
+    await unlock(root);
+    root.querySelector<HTMLButtonElement>('.entry-button')!.click();
+    click(root, 'Edit');
+    const name = fill(root, 'Name', 'Password');
+    const password = fill(root, 'Password', 'unchanged-secret-123');
+    const encryptedBefore = JSON.stringify(repository.current);
+    setLanguage('ar');
+    assert.equal(document.documentElement.lang, 'ar');
+    assert.equal(document.documentElement.dir, 'rtl');
+    assert.ok(root.textContent?.includes('حفظ الحساب'));
+    assert.ok(root.textContent?.includes('تصدير نسخة احتياطية مشفّرة'));
+    assert.equal(name.value, 'Password');
+    assert.equal(password.value, 'unchanged-secret-123');
+    assert.equal(password.dir, 'ltr');
+    assert.equal(JSON.stringify(repository.current), encryptedBefore);
+    assert.equal(dom.window.localStorage.getItem('local-vault-language'), 'ar');
+    setLanguage('en');
+    assert.equal(document.documentElement.dir, 'ltr');
+    assert.equal(name.value, 'Password');
+    click(root, 'Lock vault');
+    assert.equal(password.value, '');
+    await waitFor(() => !!root.querySelector('.unlock-card'));
+  } finally { setLanguage('en', false); app.dispose(); dom.window.close(); }
+});

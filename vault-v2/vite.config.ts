@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
 import { workerSource } from './scripts/offline-worker.mjs';
 
-const publicFiles = ['manifest.webmanifest', 'icons/vault.svg', 'icons/icon-192.png',
+const publicFiles = ['manifest.webmanifest', 'icons/favicon-32.png', 'icons/icon-192.png',
   'icons/icon-512.png', 'icons/maskable-512.png', 'icons/apple-touch-icon.png'];
 
 export default defineConfig({

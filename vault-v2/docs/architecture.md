@@ -35,3 +35,7 @@ Validate first; never merge arbitrary JSON into application objects. Supported l
 ## Dependency and delivery boundaries
 
 The lockfile captures development dependencies. `npm ci` reproduces installation; `npm run build` checks types and produces static assets. Ship the entire `dist` directory through a trusted HTTPS host or the localhost static server. Pin your deployment, review changes, and review dependency updates. Same-origin asset requests support a versioned, allowlisted offline app shell; the encrypted vault is not part of that cache. A CSP is defense in depth and does not establish that the delivered application is trustworthy.
+
+## Localization
+
+`src/i18n/ar.ts` contains Arabic UI copy keyed by English source messages. `locale.ts` owns the nonsensitive device language preference and explicit weak text bindings. Only app-authored copy is bound; group names, usernames, passwords and notes remain literal text. Live language changes update those bindings without rebuilding forms or losing drafts. Direction-sensitive spacing uses CSS logical properties. Encryption, migration and JSON schemas do not depend on language.

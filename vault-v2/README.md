@@ -8,6 +8,10 @@ This release is a working development build, not an independently audited passwo
 
 Open the hosted HTTPS link and use **Install / help** to add Vault to your phone, tablet, or desktop. No terminal is needed for the hosted app. See [installation and GitHub hosting](docs/install.md).
 
+Languages: English and Arabic (العربية), with a live language selector, right-to-left layout, and a saved device preference. Arabic is selected automatically when the browser language is Arabic and no preference has been saved. Switching languages preserves unsaved form fields; imported vault content and the JSON format are unchanged.
+
+The purple/pink vault-lock icon is included for Android, Apple Home Screen, desktop installs, and browser tabs.
+
 Themes: Auto (system), Light, Dark, Cyberpunk, and the original Forest palette. Phone navigation uses a separate entry/detail view with a back button, a collapsible group menu, and larger touch targets. Tablet layouts retain side-by-side panels when space permits.
 
 ## Run the included build
@@ -81,6 +85,7 @@ An old encrypted file may have a weak master password. Importing increases the d
 | `src/storage` | Atomic encrypted snapshot transactions | Passwords or plaintext |
 | `src/session` | Unlocked state, key lifetime, ordered saves | DOM rendering |
 | `src/ui` | Forms, navigation, safe DOM construction | Cryptographic algorithms |
+| `src/i18n` | Arabic UI copy, language preference, safe live text bindings | Vault content or encryption |
 | `src/preferences` | Appearance settings and system theme changes | Vault contents |
 | `src/pwa` | Installation prompts and update coordination | Vault encryption |
 | `src/platform` | Encrypted file download/share delivery | Storage transactions |

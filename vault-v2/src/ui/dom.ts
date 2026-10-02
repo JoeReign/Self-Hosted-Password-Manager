@@ -1,20 +1,21 @@
+import { setText, type LocalizedText } from '../i18n/locale';
 export function element<K extends keyof HTMLElementTagNameMap>(
-  tag: K, className = '', text?: string,
+  tag: K, className = '', text?: LocalizedText,
 ): HTMLElementTagNameMap[K] {
   const node = document.createElement(tag);
   if (className) node.className = className;
-  if (text !== undefined) node.textContent = text;
+  if (text !== undefined) setText(node, text);
   return node;
 }
 
-export function button(label: string, action: () => void, className = 'button'): HTMLButtonElement {
+export function button(label: LocalizedText, action: () => void, className = 'button'): HTMLButtonElement {
   const node = element('button', className, label);
   node.type = 'button';
   node.addEventListener('click', action);
   return node;
 }
 
-export function field(label: string, type = 'text', value = ''): {
+export function field(label: LocalizedText, type = 'text', value = ''): {
   wrapper: HTMLLabelElement; input: HTMLInputElement;
 } {
   const wrapper = element('label', 'field');
@@ -22,6 +23,7 @@ export function field(label: string, type = 'text', value = ''): {
   input.type = type;
   input.value = value;
   input.autocomplete = 'off';
+  input.dir = type === 'password' ? 'ltr' : 'auto';
   wrapper.append(element('span', 'label', label), input);
   return { wrapper, input };
 }

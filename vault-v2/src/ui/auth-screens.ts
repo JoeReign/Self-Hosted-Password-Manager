@@ -1,3 +1,4 @@
+import { msg } from '../i18n/locale';
 import { button, clearView, element, field } from './dom';
 
 interface UnlockActions {
@@ -12,14 +13,14 @@ export function renderUnlockScreen(root: HTMLElement, hasSavedVault: boolean, ac
   clearView(root);
   root.className = 'locked-shell';
   const card = element('section', 'unlock-card');
-  card.append(element('div', 'brand', 'V / LOCAL VAULT'), element('h1', '', 'Your secrets.\nYour device.'),
-    element('p', 'muted', 'Your vault is encrypted on this device. No vault data is uploaded.'));
+  card.append(element('div', 'brand', msg('V / LOCAL VAULT')), element('h1', '', msg('Your secrets.\nYour device.')),
+    element('p', 'muted', msg('Your vault is encrypted on this device. No vault data is uploaded.')));
   if (hasSavedVault) {
     const form = element('form');
-    const password = field('Master passphrase', 'password');
+    const password = field(msg('Master passphrase'), 'password');
     password.input.autocomplete = 'current-password';
     password.input.required = true;
-    const submit = element('button', 'button primary', 'Unlock saved vault');
+    const submit = element('button', 'button primary', msg('Unlock saved vault'));
     submit.type = 'submit';
     form.append(password.wrapper, submit);
     form.onsubmit = event => {
@@ -31,10 +32,10 @@ export function renderUnlockScreen(root: HTMLElement, hasSavedVault: boolean, ac
     };
     card.append(form);
   }
-  card.append(button(hasSavedVault ? 'Open a different vault file' : 'Open existing JSON', actions.openFile),
-    button('Create a new vault', actions.create, 'button subtle'),
-    button('Recover previous browser snapshot', () => actions.attempt(actions.recover), 'button subtle'),
-    element('p', 'footnote', 'Locks after 5 minutes of inactivity. Browser storage is not a backup: export a file regularly.'));
+  card.append(button(hasSavedVault ? msg('Open a different vault file') : msg('Open existing JSON'), actions.openFile),
+    button(msg('Create a new vault'), actions.create, 'button subtle'),
+    button(msg('Recover previous browser snapshot'), () => actions.attempt(actions.recover), 'button subtle'),
+    element('p', 'footnote', msg('Locks after 5 minutes of inactivity. Browser storage is not a backup: export a file regularly.')));
   root.append(card);
 }
 
@@ -49,18 +50,18 @@ interface SetupOptions {
 export function renderSetupScreen(root: HTMLElement, options: SetupOptions): void {
   clearView(root);
   const card = element('section', 'unlock-card');
-  card.append(element('div', 'brand', 'V / LOCAL VAULT'),
-    element('h1', '', options.mode === 'new' ? 'Start your vault.' : 'Bring your vault.'),
-    element('p', 'muted', options.mode === 'new' ? 'Use a long, unique passphrase. There is no password reset.' :
-      'Open v1/v2 encrypted JSON with its existing password, or protect legacy plaintext JSON with a new passphrase.'));
+  card.append(element('div', 'brand', msg('V / LOCAL VAULT')),
+    element('h1', '', options.mode === 'new' ? msg('Start your vault.') : msg('Bring your vault.')),
+    element('p', 'muted', options.mode === 'new' ? msg('Use a long, unique passphrase. There is no password reset.') :
+      msg('Open v1/v2 encrypted JSON with its existing password, or protect legacy plaintext JSON with a new passphrase.')));
   const form = element('form');
-  const file = field('Vault JSON file', 'file');
+  const file = field(msg('Vault JSON file'), 'file');
   file.input.accept = '.json,application/json';
   file.input.required = true;
-  const pass = field(options.mode === 'new' ? 'New master passphrase (14+ characters)' : 'Master passphrase', 'password');
+  const pass = field(options.mode === 'new' ? msg('New master passphrase (14+ characters)') : msg('Master passphrase'), 'password');
   pass.input.required = true;
   pass.input.autocomplete = options.mode === 'new' ? 'new-password' : 'current-password';
-  const confirmation = field('Confirm passphrase', 'password');
+  const confirmation = field(msg('Confirm passphrase'), 'password');
   confirmation.input.autocomplete = 'new-password';
   if (options.mode === 'import' && !options.recovery) form.append(file.wrapper);
   form.append(pass.wrapper);
@@ -69,7 +70,7 @@ export function renderSetupScreen(root: HTMLElement, options: SetupOptions): voi
     confirmation.input.required = true;
     form.append(confirmation.wrapper);
   }
-  const submit = element('button', 'button primary', options.mode === 'new' ? 'Create encrypted vault' : 'Unlock and import');
+  const submit = element('button', 'button primary', options.mode === 'new' ? msg('Create encrypted vault') : msg('Unlock and import'));
   submit.type = 'submit';
   form.append(submit);
   form.onsubmit = event => {
@@ -81,6 +82,6 @@ export function renderSetupScreen(root: HTMLElement, options: SetupOptions): voi
       file.input.value = '';
     });
   };
-  card.append(form, button('Back', () => options.attempt(options.back), 'button subtle'));
+  card.append(form, button(msg('Back'), () => options.attempt(options.back), 'button subtle'));
   root.append(card);
 }

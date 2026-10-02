@@ -1,3 +1,4 @@
+import { msg, setText } from '../i18n/locale';
 interface InstallPrompt extends Event {
   prompt(): Promise<void>;
   userChoice: Promise<{ outcome: 'accepted' | 'dismissed' }>;
@@ -11,11 +12,11 @@ export class InstallController {
     window.addEventListener('beforeinstallprompt', event => {
       event.preventDefault();
       this.prompt = event as InstallPrompt;
-      this.install.textContent = 'Install app';
+      setText(this.install, msg('Install app'));
     }, { signal: this.events.signal });
     window.addEventListener('appinstalled', () => {
       this.prompt = null;
-      this.install.textContent = 'App installed';
+      setText(this.install, msg('App installed'));
     }, { signal: this.events.signal });
     this.install.addEventListener('click', () => { void this.run(); }, { signal: this.events.signal });
   }

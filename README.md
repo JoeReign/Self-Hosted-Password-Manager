@@ -59,6 +59,25 @@ Known legacy fields are preserved: account groups, entries, usernames, passwords
 
 SVG and remote images, malformed records, duplicate IDs, unsupported versions, and oversized files produce an import error. Supported embedded images are PNG, JPEG, GIF, and WebP. New exports use v2 and cannot be opened by the old application. Original imported files are not modified.
 
+## Publish from GitHub — no terminal needed
+
+The included root workflow builds and tests `vault-v2/`, then publishes `vault-v2/dist` as the site's root.
+
+1. Extract the repository update ZIP on your computer.
+2. Open [JoeReign/Self-Hosted-Password-Manager](https://github.com/JoeReign/Self-Hosted-Password-Manager) on the `main` branch.
+3. Select **Add file → Upload files**.
+4. Drag the extracted **contents** into the upload area: `vault-v2`, `.github`, `README.md`, and `GITHUB_PAGES_SETUP.md`. Keep the folders intact and do not upload the ZIP itself or its outer extraction folder.
+5. Commit the files to `main`. If you use a new branch, merge its pull request into `main` before deploying.
+6. Open **Settings → Pages → Build and deployment → Source**, then select **GitHub Actions**. A workflow is already included; no additional template is needed.
+7. Open **Actions → Publish Vault → Run workflow**, select `main`, and run it.
+8. Wait for the build and deployment to finish successfully, then open the GitHub Pages address above.
+
+If a workflow ran before Pages was enabled and failed, enable Pages and run it again. After setup, commits to `main` automatically run the checks and publish the app.
+
+If your file picker does not show `.github`, use **Add file → Create new file**, enter `.github/workflows/pages.yml` as the filename, and paste the contents of that file from the package. Do this before running the workflow.
+
+Never add personal vault files or real credentials to this public repository.
+
 ## Project structure
 
 | Path | Purpose |
@@ -102,7 +121,14 @@ The application has no third-party JavaScript runtime dependencies. Vite, TypeSc
 - [Code walkthrough](vault-v2/docs/walkthrough.md)
 - [Installation](vault-v2/docs/install.md)
 - [Verification record](vault-v2/docs/verification.md)
+- [GitHub Pages setup](GITHUB_PAGES_SETUP.md)
 
-The build passes strict TypeScript checking and 22 automated tests. DOM and service-worker tests use simulated environments. Physical Samsung/iPhone/iPad testing, real-browser offline/install checks, and independent security review remain outstanding. This is a development release, not an audited password manager; use sample credentials while reviewing it.
+The build passes strict TypeScript checking and 25 automated tests. DOM and service-worker tests use simulated environments. Physical Samsung/iPhone/iPad testing, real-browser offline/install checks, and independent security review remain outstanding. This is a development release, not an audited password manager; use sample credentials while reviewing it.
 
 The initial v2 implementation used AI assistance. Changes should be judged through readable source, explainable decisions, reproducible checks, and independent review.
+
+## Arabic and app icon update
+
+Use **Language / اللغة** in the app header to switch between English and Arabic. Arabic uses a right-to-left layout. The choice stays on this device; language switching preserves draft fields and never translates imported account data or changes the JSON format. With no saved choice, Arabic browsers start in Arabic.
+
+A new purple/pink vault-lock icon is supplied for Android, iPhone/iPad, desktop installations and the browser tab. The automated suite now has 25 passing tests; real-device layout and installation remain to be checked.

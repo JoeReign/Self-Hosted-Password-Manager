@@ -1,9 +1,12 @@
 # Verification record
 
-This build passed strict TypeScript checking, a Vite production build, and 22 automated tests on Node.js 24.19.0.
+This build passed strict TypeScript checking, a Vite production build, and 25 automated tests on Node.js 24.19.0.
 
 The tests cover:
 
+- Arabic browser-language defaults, saved preference, right-to-left document direction, live text/attribute changes, and safe literal parameter rendering.
+- Language switching during an unsaved edit preserves draft and secret fields, leaves encrypted storage unchanged, and still clears secrets on lock.
+- Translation parameter parity between English source messages and Arabic copy.
 - Unicode, attachments, and password-history round trips.
 - Wrong passwords and altered ciphertext.
 - Bounded key-derivation parameters and authenticated header data.

@@ -1,3 +1,4 @@
+import { msg } from '../i18n/locale';
 import { generatePassword } from '../crypto/passwords';
 import { emptyEntry, type Entry, type Vault } from '../vault/types';
 import { imageUrl, MAX_PLAINTEXT_BYTES, validateVault } from '../vault/validation';
@@ -14,18 +15,19 @@ interface EditorOptions {
 
 export function renderEntryEditor(pane: HTMLElement, existing: Entry | null, options: EditorOptions): void {
     const draft = existing ? structuredClone(existing) : emptyEntry();
-    pane.append(element('h2', '', existing ? 'Edit entry' : 'New entry'));
+    pane.append(element('h2', '', existing ? msg('Edit entry') : msg('New entry')));
     const form = element('form', 'entry-form');
-    const name = field('Name', 'text', draft.app);
+    const name = field(msg('Name'), 'text', draft.app);
     name.input.required = true;
-    const user = field('Username', 'text', draft.user);
-    const url = field('Website URL', 'text', draft.url);
-    const pass = field('Password', 'password', draft.pass);
+    const user = field(msg('Username'), 'text', draft.user);
+    const url = field(msg('Website URL'), 'text', draft.url);
+    const pass = field(msg('Password'), 'password', draft.pass);
     const notes = element('label', 'field');
     const textarea = element('textarea');
     textarea.value = draft.notes;
     textarea.rows = 5;
-    notes.append(element('span', 'label', 'Notes'), textarea);
+    textarea.dir = 'auto';
+    notes.append(element('span', 'label', msg('Notes')), textarea);
     const groups = element('label', 'field');
     const select = element('select');
     const source = options.vault.vaults.flatMap(group => group.entries.map(entry => ({ group, entry }))).find(item => item.entry.id === existing?.id)?.group;
@@ -35,16 +37,16 @@ export function renderEntryEditor(pane: HTMLElement, existing: Entry | null, opt
       select.append(option);
     }
     select.value = source?.id ?? (options.vault.vaults.find(group => group.id === options.groupId)?.id ?? options.vault.vaults[0]?.id ?? '');
-    groups.append(element('span', 'label', 'Account group'), select);
-    const attachments = field('Add images (PNG, JPEG, WebP, GIF)', 'file');
+    groups.append(element('span', 'label', msg('Account group')), select);
+    const attachments = field(msg('Add images (PNG, JPEG, WebP, GIF)'), 'file');
     attachments.input.accept = 'image/png,image/jpeg,image/webp,image/gif';
     attachments.input.multiple = true;
-    const uploaded = element('p', 'footnote', `${draft.images.length} saved attachments`);
-    const generate = button('Generate 24-character password', () => { pass.input.value = generatePassword(); }, 'button small');
+    const uploaded = element('p', 'footnote', msg('{count} saved attachments', { count: draft.images.length }));
+    const generate = button(msg('Generate 24-character password'), () => { pass.input.value = generatePassword(); }, 'button small');
     form.append(name.wrapper, groups, user.wrapper, url.wrapper, pass.wrapper, generate, notes, attachments.wrapper, uploaded);
-    const save = element('button', 'button primary', 'Save entry');
+    const save = element('button', 'button primary', msg('Save entry'));
     save.type = 'submit';
-    form.append(save, button('Cancel', () => options.cancel(), 'button subtle'));
+    form.append(save, button(msg('Cancel'), () => options.cancel(), 'button subtle'));
     form.onsubmit = event => {
       event.preventDefault();
       options.attempt(async () => {
